@@ -55,8 +55,11 @@ export async function processStage1(query: string): Promise<Stage1Output> {
         ui_module: data.module as UIModule,
         intent_summary: data.summary,
         sentiment: data.sentiment as any,
-        trigger_element: "Gemini AI Engine",
-        details: { urgency: data.urgency as any }
+        details: { 
+          trigger_element: "Gemini AI Engine", 
+          input_type: "Text",
+          urgency: data.urgency as any 
+        }
       };
     } catch (e) {
       console.error("Gemini Stage 1 error, falling back to rule-based:", e);
