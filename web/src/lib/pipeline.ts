@@ -53,7 +53,7 @@ export async function processStage1(query: string): Promise<Stage1Output> {
     summary = "Candidate research and comparison";
     trigger = "Compare Tool";
     urgency = "Medium";
-  } else if (lowerQuery.includes("http") || lowerQuery.includes("fake") || lowerQuery.includes("whatsapp") || lowerQuery.includes("fact check")) {
+  } else if (lowerQuery.includes("http") || lowerQuery.includes("fake") || lowerQuery.includes("whatsapp") || lowerQuery.includes("fact check") || lowerQuery.includes("news") || lowerQuery.includes("true")) {
     module = "Fake_News_Verify";
     summary = "Misinformation verification request";
     sentiment = "Skeptical";
@@ -155,7 +155,7 @@ export async function processStage2(s1: Stage1Output, searchData?: string): Prom
     case "Micro_Learning":
       action = "START_MODULE";
       score = 25;
-      response = "Great question! Understanding things like NOTA and EVM security helps strengthen our democracy.";
+      response = searchData || "Great question! Understanding things like NOTA and EVM security helps strengthen our democracy.";
       nextStep = "Explore the ECI SVEEP portal for simplified educational resources.";
       url = "https://ecisveep.nic.in/";
       break;
