@@ -1,3 +1,11 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Initialize the Google Generative AI with the API Key
+// In production, this should be handled securely via environment variables
+const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 export type UIModule = 
   | "Voter_Dashboard" 
   | "Candidate_Intelligence" 
@@ -33,7 +41,29 @@ export interface Stage2Output {
  * In a real app, this would call Gemini with the specific prompt.
  */
 export async function processStage1(query: string): Promise<Stage1Output> {
-  // Simulate network delay
+  // If API Key is provided, use Google's Gemini for real intelligence
+  if (API_KEY) {
+    try {
+      const prompt = `Analyze this Indian citizen's election query: "${query}"
+      Classify it into ONE module: Voter_Dashboard, Candidate_Intelligence, Fake_News_Verify, Voting_Day_Assistant, Micro_Learning, Other, or Ambiguous.
+      Return ONLY a JSON object: {"module": "string", "summary": "brief summary", "sentiment": "Curious|Skeptical|Anxious|Neutral", "urgency": "Low|Medium|High"}`;
+      
+      const result = await model.generateContent(prompt);
+      const data = JSON.parse(result.response.text());
+      
+      return {
+        ui_module: data.module as UIModule,
+        intent_summary: data.summary,
+        sentiment: data.sentiment as any,
+        trigger_element: "Gemini AI Engine",
+        details: { urgency: data.urgency as any }
+      };
+    } catch (e) {
+      console.error("Gemini Stage 1 error, falling back to rule-based:", e);
+    }
+  }
+
+  // Fallback to rule-based logic (ensures reliability)
   await new Promise(resolve => setTimeout(resolve, 800));
 
   const lowerQuery = query.toLowerCase();
@@ -94,6 +124,32 @@ export async function processStage1(query: string): Promise<Stage1Output> {
  * Maps the intent to specific app logic and generates a guided response.
  */
 export async function processStage2(s1: Stage1Output, searchData?: string): Promise<Stage2Output> {
+  // If API Key is available, use Gemini for high-quality, neutral orchestration
+  if (API_KEY) {
+    try {
+      const prompt = `Act as Praja Vidhya, a neutral election assistant. 
+      Intent: ${s1.intent_summary}
+      Search Data: ${searchData || "None"}
+      Generate a professional, neutral response for a citizen. 
+      Return JSON: {"response": "string", "next_step": "string", "action": "string"}`;
+      
+      const result = await model.generateContent(prompt);
+      const data = JSON.parse(result.response.text());
+      
+      return {
+        ui_module: s1.ui_module,
+        action: data.action,
+        priority_score: 90,
+        response: data.response,
+        next_step: data.next_step,
+        external_url: "https://eci.gov.in",
+        requires_location: s1.ui_module === "Voting_Day_Assistant"
+      };
+    } catch (e) {
+      console.error("Gemini Stage 2 error, falling back:", e);
+    }
+  }
+
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 600));
 
@@ -142,7 +198,7 @@ export async function processStage2(s1: Stage1Output, searchData?: string): Prom
       score = 95;
       response = "Don't worry, I'll guide you to your booth. Make sure to carry your Voter ID or one of the 12 approved documents.";
       nextStep = "Use the ECI Booth Locator to find your exact polling station.";
-      url = "https://voters.eci.gov.in/";
+      url = "https://www.google.com/maps/search/polling+booth+near+me";
       return {
         ui_module: s1.ui_module,
         action: action,
